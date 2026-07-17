@@ -32,7 +32,7 @@ Application Windows WPF pour la gestion des pesées de camions avec intégration
 - SAP .NET Connector 3.0 (NCo) - [Télécharger](https://support.sap.com/en/product/connectors/msnet.html)
 - Accès SAP avec RFC activé
 
-## 🚀 Installation
+##  Installation
 
 ### 1. Cloner le projet
 ```bash
@@ -84,7 +84,7 @@ dotnet build
 dotnet run
 ```
 
-## 📁 Structure du Projet
+##  Structure du Projet
 
 ```
 pont_bascule/
@@ -118,7 +118,7 @@ L'application supporte les balances communiquant via RS-232/USB avec protocole s
 - Parity: None
 - Stop Bits: 1
 
-## 📡 Intégration SAP
+##  Intégration SAP
 
 ### Installation SAP NCo
 
@@ -136,7 +136,7 @@ Créer une fonction RFC personnalisée dans SAP pour recevoir les données de pe
 - Paramètres d'import: Numéro camion, Poids, Type de pesée
 - Paramètre d'export: Numéro de document SAP
 
-## 🧪 Développement sur Mac/Linux
+##  Développement sur Mac/Linux
 
 Le développement de base (models, services, logique métier) peut être fait sur Mac/Linux, mais :
 
@@ -147,7 +147,7 @@ Le développement de base (models, services, logique métier) peut être fait su
 
 **Pour tester l'interface, utilisez un VM Windows ou un PC Windows.**
 
-## 📦 Compilation pour Production
+##  Compilation pour Production
 
 ```bash
 # Publication pour Windows x64
@@ -156,7 +156,7 @@ dotnet publish -c Release -r win-x64 --self-contained
 # Le résultat sera dans : bin/Release/net8.0-windows/win-x64/publish/
 ```
 
-## 🐛 Dépannage
+##  Dépannage
 
 ### La balance ne se connecte pas
 - Vérifier que le port COM est correct
@@ -168,7 +168,7 @@ dotnet publish -c Release -r win-x64 --self-contained
 - Vérifier que RFC est activé
 - Vérifier la connectivité réseau vers le serveur SAP
 
-## 🤝 Contribution
+##  Contribution
 
 1. Fork le projet
 2. Créer une branche (`git checkout -b feature/AmazingFeature`)
@@ -176,7 +176,7 @@ dotnet publish -c Release -r win-x64 --self-contained
 4. Push vers la branche (`git push origin feature/AmazingFeature`)
 5. Ouvrir une Pull Request
 
-## 📝 À Implémenter
+##  À Implémenter
 
 - [ ] Intégration réelle SAP NCo (actuellement simulé)
 - [ ] Protocole de communication série spécifique à votre balance
@@ -191,10 +191,10 @@ dotnet publish -c Release -r win-x64 --self-contained
 
 Ce projet est sous licence MIT.
 
-## 👥 Auteurs
+##  Auteurs
 
 - Anouar El Khalfi - Développement initial
 
-## 📞 Support
+##  Support
 
 Pour toute question ou problème, ouvrez une issue sur GitHub.

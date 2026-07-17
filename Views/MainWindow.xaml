@@ -37,6 +37,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
@@ -52,6 +53,11 @@
                 <StackPanel Grid.Column="2">
                     <TextBlock Text="Produit:" FontWeight="Bold"/>
                     <TextBox Text="{Binding Product, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3">
+                    <TextBlock Text="SageID:" FontWeight="Bold"/>
+                    <TextBox Text="{Binding SageID, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -105,6 +111,27 @@
                 <!-- Boutons Actions -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" 
                            HorizontalAlignment="Center" Margin="0,20,0,0">
+					<Button Content="Entrée simple"
+        Command="{Binding SaveSimpleEntryCommand}" />
+
+					<Button Content="Double - Entrée"
+							Command="{Binding SaveDoubleEntryInCommand}" />
+
+					<Button Content="Double - Sortie"
+							Command="{Binding SaveDoubleEntryOutCommand}" />
+
+					<Button Content="Multiple - Démarrer"
+							Command="{Binding StartMultipleEntryCommand}" />
+
+					<Button Content="Multiple - Entrée"
+							Command="{Binding SaveMultipleEntryInCommand}" />
+
+					<Button Content="Multiple - Sortie"
+							Command="{Binding SaveMultipleEntryOutCommand}" />
+
+					<Button Content="Multiple - Clôturer"
+							Command="{Binding CloseMultipleEntryCommand}" />
+					
                     <Button Content="PESÉE ENTRÉE" 
                            Command="{Binding WeighInCommand}" 
                            Background="{StaticResource PrimaryColor}" 
@@ -113,6 +140,11 @@
                            Command="{Binding WeighOutCommand}" 
                            Background="{StaticResource AccentColor}" 
                            Foreground="White" Width="150" Height="45"/>
+					<Button Content="Générer ticket numérique"
+					Command="{Binding GenerateDigitalTicketCommand}" />
+
+					<Button Content="Ouvrir ticket numérique"
+							Command="{Binding OpenLatestDigitalTicketCommand}" />
                     <Button Content="IMPRIMER TICKET" 
                            Command="{Binding PrintTicketCommand}" 
                            Width="150" Height="45"/>

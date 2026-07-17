@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Linq;
+
 
 namespace PontBascule.ViewModels
 {
@@ -15,6 +17,9 @@ namespace PontBascule.ViewModels
         private readonly IScaleService _scaleService;
         private readonly ISapService _sapService;
         private readonly IDatabaseService _databaseService;
+        private readonly IWeighingWorkflowService _workflowService;
+        private readonly ISageService _sageService;
+        private readonly IPaperlessService _paperlessService;
 
         [ObservableProperty]
         private string _truckNumber = string.Empty;
@@ -24,6 +29,9 @@ namespace PontBascule.ViewModels
 
         [ObservableProperty]
         private string _product = string.Empty;
+
+        [ObservableProperty]
+        private string _sageID = string.Empty;
 
         [ObservableProperty]
         private decimal _currentWeight = 0;
@@ -45,11 +53,17 @@ namespace PontBascule.ViewModels
         public MainViewModel(
             IScaleService scaleService,
             ISapService sapService,
-            IDatabaseService databaseService)
+            IDatabaseService databaseService,
+            IWeighingWorkflowService workflowService,
+            ISageService sageService,
+            IPaperlessService paperlessService)
         {
             _scaleService = scaleService;
             _sapService = sapService;
             _databaseService = databaseService;
+            _workflowService = workflowService;
+            _sageService = sageService;
+            _paperlessService = paperlessService;
 
             _scaleService.WeightChanged += OnWeightChanged;
 
@@ -174,6 +188,111 @@ namespace PontBascule.ViewModels
         }
 
         [RelayCommand]
+        private async Task GenerateDigitalTicket()
+        {
+            try
+            {
+                var operations = await _databaseService.GetRecentOperationsAsync(20);
+
+                var latestOperation = operations
+                    .FirstOrDefault(operation => operation.Status == OperationStatus.Completed);
+
+                if (latestOperation == null)
+                {
+                    StatusMessage = "Aucune opération terminée pour générer un ticket numérique";
+                    return;
+                }
+
+                var cycles = await _databaseService.GetCyclesByOperationIdAsync(latestOperation.Id);
+
+                var filePath = await _paperlessService.GenerateTicketAsync(latestOperation, cycles);
+
+                latestOperation.DigitalTicketPath = filePath;
+                latestOperation.DigitalTicketGeneratedAt = DateTime.Now;
+
+                await _databaseService.UpdateOperationAsync(latestOperation);
+
+                StatusMessage = $"Ticket numérique généré: {filePath}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur génération ticket numérique: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task OpenLatestDigitalTicket()
+        {
+            try
+            {
+                var operations = await _databaseService.GetRecentOperationsAsync(20);
+
+                var latestOperation = operations
+                    .FirstOrDefault(operation =>
+                        operation.Status == OperationStatus.Completed &&
+                        !string.IsNullOrWhiteSpace(operation.DigitalTicketPath));
+
+                if (latestOperation == null)
+                {
+                    StatusMessage = "Aucun ticket numérique trouvé";
+                    return;
+                }
+
+                _paperlessService.OpenTicket(latestOperation.DigitalTicketPath!);
+
+                StatusMessage = $"Ticket ouvert: {latestOperation.TicketNumber}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur ouverture ticket: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task SendLatestOperationToPaperless()
+        {
+            try
+            {
+                StatusMessage = "Recherche de la dernière opération terminée...";
+
+                var operations = await _databaseService.GetRecentOperationsAsync(20);
+                var latestOperation = operations
+                    .FirstOrDefault(operation =>
+                        operation.Status == OperationStatus.Completed &&
+                        string.IsNullOrWhiteSpace(operation.PaperlessDocumentId));
+
+                if (latestOperation == null)
+                {
+                    StatusMessage = "Aucune opération terminée à envoyer vers Paperless";
+                    return;
+                }
+
+                var cycles = await _databaseService.GetCyclesByOperationIdAsync(latestOperation.Id);
+
+                StatusMessage = $"Génération du ticket {latestOperation.TicketNumber}...";
+                var filePath = await _paperlessService.GenerateTicketAsync(latestOperation, cycles);
+
+                latestOperation.DigitalTicketPath = filePath;
+                latestOperation.DigitalTicketGeneratedAt = DateTime.Now;
+
+                StatusMessage = $"Envoi du ticket {latestOperation.TicketNumber} vers Paperless...";
+                var uploadResult = await _paperlessService.UploadTicketAsync(latestOperation, filePath);
+
+                latestOperation.PaperlessDocumentId = uploadResult.DocumentId;
+                latestOperation.PaperlessDocumentUrl = uploadResult.DocumentUrl;
+                latestOperation.PaperlessUploadedAt = DateTime.Now;
+
+                await _databaseService.UpdateOperationAsync(latestOperation);
+
+                StatusMessage = $"Ticket envoyé vers Paperless: {uploadResult.DocumentUrl}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur Paperless: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
         private async Task PrintTicket()
         {
             if (WeighingHistory.Count == 0)
@@ -194,6 +313,219 @@ namespace PontBascule.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"❌ Erreur impression: {ex.Message}";
+            }
+        }
+        [RelayCommand]
+        private async Task SaveSimpleEntry()
+        {
+            if (string.IsNullOrWhiteSpace(TruckNumber))
+            {
+                StatusMessage = "Veuillez saisir le numéro de camion";
+                return;
+            }
+
+            try
+            {
+                var weight = await _scaleService.ReadWeightAsync();
+
+                var operation = await _workflowService.SaveSimpleEntryAsync(
+                    TruckNumber,
+                    Transporter,
+                    Product,
+                    SageID,
+                    weight);
+
+                StatusMessage = $"Entrée simple enregistrée. Ticket {operation.TicketNumber}, poids {weight:N0} kg";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+        [RelayCommand]
+        private async Task SaveDoubleEntryIn()
+        {
+            if (string.IsNullOrWhiteSpace(TruckNumber))
+            {
+                StatusMessage = "Veuillez saisir le numéro de camion";
+                return;
+            }
+
+            try
+            {
+                var weight = await _scaleService.ReadWeightAsync();
+
+                var operation = await _workflowService.SaveDoubleEntryInAsync(
+                    TruckNumber,
+                    Transporter,
+                    Product,
+                    SageID,
+                    weight);
+
+                StatusMessage = $"Entrée double commencée. Ticket {operation.TicketNumber}, entrée {weight:N0} kg";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+        [RelayCommand]
+        private async Task SaveDoubleEntryOut()
+        {
+            if (string.IsNullOrWhiteSpace(TruckNumber))
+            {
+                StatusMessage = "Veuillez saisir le numéro de camion";
+                return;
+            }
+
+            try
+            {
+                var weight = await _scaleService.ReadWeightAsync();
+
+                var operation = await _workflowService.SaveDoubleEntryOutAsync(
+                    TruckNumber,
+                    weight);
+
+                StatusMessage = $"Entrée double terminée. Net {operation.TotalNetWeight:N0} kg";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+        [ObservableProperty]
+        private int _selectedOperationId;
+        [RelayCommand]
+        private async Task StartMultipleEntry()
+        {
+            if (string.IsNullOrWhiteSpace(TruckNumber))
+            {
+                StatusMessage = "Veuillez saisir le numéro de camion";
+                return;
+            }
+
+            try
+            {
+                var operation = await _workflowService.StartMultipleEntryAsync(
+                    TruckNumber,
+                    Transporter,
+                    Product,
+                    SageID);
+
+                SelectedOperationId = operation.Id;
+
+                StatusMessage = $"Entrée multiple commencée. Ticket {operation.TicketNumber}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+        [RelayCommand]
+        private async Task SaveMultipleEntryIn()
+        {
+            if (SelectedOperationId <= 0)
+            {
+                StatusMessage = "Veuillez sélectionner une opération multiple ouverte";
+                return;
+            }
+
+            try
+            {
+                var weight = await _scaleService.ReadWeightAsync();
+
+                var cycle = await _workflowService.SaveMultipleEntryInAsync(
+                    SelectedOperationId,
+                    weight);
+
+                StatusMessage = $"Cycle {cycle.CycleNumber}: entrée enregistrée {weight:N0} kg";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task SaveMultipleEntryOut()
+        {
+            if (SelectedOperationId <= 0)
+            {
+                StatusMessage = "Veuillez sélectionner une opération multiple ouverte";
+                return;
+            }
+
+            try
+            {
+                var weight = await _scaleService.ReadWeightAsync();
+
+                var operation = await _workflowService.SaveMultipleEntryOutAsync(
+                    SelectedOperationId,
+                    weight);
+
+                StatusMessage = $"Cycle terminé. Total net actuel {operation.TotalNetWeight:N0} kg";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task CloseMultipleEntry()
+        {
+            if (SelectedOperationId <= 0)
+            {
+                StatusMessage = "Veuillez sélectionner une opération multiple ouverte";
+                return;
+            }
+
+            try
+            {
+                var operation = await _workflowService.CloseMultipleEntryAsync(SelectedOperationId);
+
+                StatusMessage = $"Entrée multiple clôturée. Total net {operation.TotalNetWeight:N0} kg";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        private async Task SendLatestOperationToSage()
+        {
+            try
+            {
+                StatusMessage = "Recherche de la dernière opération terminée...";
+
+                var operations = await _databaseService.GetRecentOperationsAsync(20);
+
+                var latestOperation = operations
+                    .FirstOrDefault(operation =>
+                        operation.Status == OperationStatus.Completed &&
+                        operation.SageSyncStatus != SageSyncStatus.Synced);
+
+                if (latestOperation == null)
+                {
+                    StatusMessage = "Aucune opération terminée à envoyer vers Sage";
+                    return;
+                }
+
+                StatusMessage = $"Envoi du ticket {latestOperation.TicketNumber} vers Sage...";
+
+                var sageDocumentNumber = await _sageService.SendOperationAsync(latestOperation);
+
+                latestOperation.SageDocumentNumber = sageDocumentNumber;
+                latestOperation.SageSyncStatus = SageSyncStatus.Synced;
+
+                await _databaseService.UpdateOperationAsync(latestOperation);
+
+                StatusMessage = $"Opération envoyée vers Sage. Document: {sageDocumentNumber}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Erreur Sage: {ex.Message}";
             }
         }
 

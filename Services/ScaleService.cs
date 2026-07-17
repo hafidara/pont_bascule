@@ -4,6 +4,8 @@ using System;
 using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Globalization;
 
 namespace PontBascule.Services
 {
@@ -74,6 +76,86 @@ namespace PontBascule.Services
             }
         }
 
+        private static bool IsStableWeight(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+                return false;
+
+            var value = rawValue.ToUpperInvariant();
+
+            if (value.Contains("US") || value.Contains("UNSTABLE"))
+                return false;
+
+            if (value.Contains("ST") || value.Contains("STABLE"))
+                return true;
+
+            return true;
+        }
+
+        private decimal ParseInd200Weight(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+                throw new InvalidOperationException("Réponse IND200 vide.");
+
+            var stable = IsStableWeight(rawValue);
+
+            if (_config.RequireStableWeight && !stable)
+                throw new InvalidOperationException($"Poids instable ignoré: {rawValue}");
+
+            var cleaned = rawValue
+                .Replace("kg", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("g", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("t", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("+", "")
+                .Trim();
+
+            var numericPart = new string(cleaned
+                .Where(c => char.IsDigit(c) || c == '.' || c == ',' || c == '-')
+                .ToArray());
+
+            numericPart = numericPart.Replace(',', '.');
+
+            if (!decimal.TryParse(
+                numericPart,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var weight))
+            {
+                throw new InvalidOperationException($"Format poids IND200 non reconnu: {rawValue}");
+            }
+
+            return weight;
+        }
+
+        private static decimal ParseWeight(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+                throw new InvalidOperationException("Réponse balance vide.");
+
+            var cleaned = rawValue
+                .Replace("kg", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("KG", "", StringComparison.OrdinalIgnoreCase)
+                .Replace("+", "")
+                .Trim();
+
+            var numericPart = new string(cleaned
+                .Where(c => char.IsDigit(c) || c == '.' || c == ',' || c == '-')
+                .ToArray());
+
+            numericPart = numericPart.Replace(',', '.');
+
+            if (!decimal.TryParse(
+                numericPart,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var weight))
+            {
+                throw new InvalidOperationException($"Format poids non reconnu: {rawValue}");
+            }
+
+            return weight;
+        }
+
         public async Task<decimal> ReadWeightAsync()
         {
             if (!IsConnected)
@@ -81,15 +163,21 @@ namespace PontBascule.Services
 
             try
             {
-                // Simulation pour le développement
-                // À remplacer par la vraie lecture série
-                await Task.Delay(100);
-                var random = new Random();
-                return random.Next(0, 50000);
+                return await Task.Run(() =>
+                {
+                    if (!_config.ContinuousMode && !string.IsNullOrWhiteSpace(_config.ReadCommand))
+                    {
+                        _serialPort!.WriteLine(_config.ReadCommand);
+                    }
+
+                    var line = _serialPort!.ReadLine();
+
+                    return ParseInd200Weight(line);
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erreur lecture poids: {ex.Message}");
+                Console.WriteLine($"Erreur lecture poids IND200: {ex.Message}");
                 return 0;
             }
         }

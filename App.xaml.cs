@@ -33,6 +33,9 @@ namespace PontBascule
             services.AddSingleton<IScaleService, ScaleService>();
             services.AddSingleton<ISapService, SapService>();
             services.AddSingleton<IDatabaseService, DatabaseService>();
+            services.AddSingleton<IWeighingWorkflowService, WeighingWorkflowService>();
+            services.AddSingleton<ISageService, SageService>();
+            services.AddSingleton<IPaperlessService, PaperlessService>();
 
             // ViewModels
             services.AddTransient<MainViewModel>();

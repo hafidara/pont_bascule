@@ -1,12 +1,12 @@
-# 🎯 Résumé du Projet - Pont de Bascule
+#  Résumé du Projet - Pont de Bascule
 
-## 📦 Ce qui a été créé
+##  Ce qui a été créé
 
 Vous avez maintenant un **projet .NET WPF complet** pour gérer un pont de bascule industriel avec intégration SAP S/4 HANA.
 
 ---
 
-## 📂 Structure Complète
+## Structure Complète
 
 ```
 pont_bascule/
@@ -51,9 +51,9 @@ pont_bascule/
 
 ---
 
-## ✅ Fonctionnalités Implémentées
+##  Fonctionnalités Implémentées
 
-### 1. ⚖️ **Gestion Pesée**
+### 1. **Gestion Pesée**
 - [x] Pesée entrée camion
 - [x] Pesée sortie camion
 - [x] Calcul poids net automatique
@@ -67,7 +67,7 @@ pont_bascule/
 - [x] Mode continu (streaming)
 - [x] Détection stabilisation
 
-### 3. 🔗 **Intégration SAP S/4 HANA**
+### 3. **Intégration SAP S/4 HANA**
 - [x] Connexion SAP NCo (préparé)
 - [x] Envoi pesées vers SAP via RFC
 - [x] Récupération n° document SAP
@@ -80,19 +80,19 @@ pont_bascule/
 - [x] Historique complet
 - [x] Recherche et filtrage
 
-### 5. 🖨️ **Impression**
+### 5. **Impression**
 - [x] Tickets de pesée
 - [x] Impression directe
 - [x] Génération PDF
 - [x] Personnalisation format
 
-### 6. 📊 **Export Données**
+### 6. **Export Données**
 - [x] Export Excel (.xlsx)
 - [x] Export CSV
 - [x] Rapports PDF
 - [x] Période personnalisable
 
-### 7. 🎨 **Interface Moderne**
+### 7. **Interface Moderne**
 - [x] WPF Material Design
 - [x] Affichage poids temps réel
 - [x] Tableau historique
@@ -101,7 +101,7 @@ pont_bascule/
 
 ---
 
-## 🚀 Comment Utiliser
+## Comment Utiliser
 
 ### Sur Mac (Vous - Développement logique)
 
@@ -144,7 +144,7 @@ dotnet run
 
 ---
 
-## 📚 Documentation Disponible
+## Documentation Disponible
 
 | Document | Contenu | Pour Qui |
 |----------|---------|----------|
@@ -172,7 +172,7 @@ dotnet run
 
 ---
 
-## ⚙️ Configuration Requise
+##  Configuration Requise
 
 ### Développement
 - **Mac/Linux/Windows** : VS Code + .NET SDK 8.0
@@ -186,20 +186,20 @@ dotnet run
 
 ---
 
-## 💰 Coûts
+## Coûts
 
 | Élément | Prix |
 |---------|------|
-| .NET SDK | **Gratuit** ✅ |
-| Visual Studio Community | **Gratuit** ✅ |
-| VS Code | **Gratuit** ✅ |
-| Toutes les libraries | **Gratuites** ✅ |
-| SAP NCo | **Gratuit** ✅ (avec licence SAP) |
-| **TOTAL** | **0€** 🎉 |
+| .NET SDK | **Gratuit**  |
+| Visual Studio Community | **Gratuit**  |
+| VS Code | **Gratuit**  |
+| Toutes les libraries | **Gratuites**  |
+| SAP NCo | **Gratuit**  (avec licence SAP) |
+| **TOTAL** | **0€** |
 
 ---
 
-## 📋 Prochaines Étapes
+##  Prochaines Étapes
 
 ### Semaine 1-2 : Configuration
 - [ ] Lire [GUIDE_DEVELOPPEMENT.md](GUIDE_DEVELOPPEMENT.md)
@@ -230,7 +230,7 @@ dotnet run
 
 ---
 
-## 🆘 Besoin d'Aide ?
+##  Besoin d'Aide ?
 
 ### Questions Techniques
 - Stack Overflow : [c#] [wpf] [.net]
@@ -247,7 +247,7 @@ dotnet run
 
 ---
 
-## 🎯 Points Clés à Retenir
+##  Points Clés à Retenir
 
 1. ✅ **C'est gratuit** - Aucun coût de licence
 2. ✅ **Production-ready** - Architecture professionnelle
@@ -259,7 +259,7 @@ dotnet run
 
 ---
 
-## 🚀 Commandes Git Rapides
+## Commandes Git Rapides
 
 ```bash
 # Voir les changements
@@ -281,27 +281,7 @@ git log --oneline
 
 ---
 
-## 📊 Statistiques Projet
 
-```
-Fichiers créés        : 25+
-Lignes de code        : ~2000+
-Services implémentés  : 6 (Balance, SAP, DB, Print, Export, Config)
-Models                : 5
-Documentation         : 1500+ lignes
-Architecture          : MVVM (Industry standard)
-Tests                 : Prêt pour xUnit
-Temps dev             : ~30 min (pour vous créer tout ça)
-Temps à économiser    : Des semaines ! 🎉
-```
 
----
 
-**🎉 Félicitations !** Vous avez une base solide pour votre application de pont de bascule.
 
-**Prochaine action recommandée :** 
-1. Pusher sur GitHub : `git push`
-2. Lire [GUIDE_DEVELOPPEMENT.md](GUIDE_DEVELOPPEMENT.md)
-3. Configurer `appsettings.json`
-
-Bonne chance avec votre projet ! 🚀
